@@ -59,7 +59,7 @@ postgres=> GRANT SELECT ON ALL TABLES IN SCHEMA public TO service_role;
 postgres=> NOTIFY pgrst, 'reload schema';
 ```
 
-The graphiql IDE should not work properly
+The graphiql IDE should now work properly
 
 <details>
 <summary>If you'd like, you can verify permissions to see if you actually need to run the GRANT statements</summary>
