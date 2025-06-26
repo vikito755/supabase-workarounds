@@ -47,3 +47,34 @@ FRONTEND_DASHBOARD_URL="http://localhost:3000/dashboard"
 
 Doing just:
 site_url = "env(FRONTEND_URL)/dashboard" will resolve to just "/dashboard", which is not nice.
+
+# Dashboard GraphQL
+
+With the self-hosted [docker setup](https://github.com/supabase/supabase/tree/master/docker), [this graphiql dashboard page](http://localhost:8000/project/default/integrations/graphiql/graphiql) may not have its [GraphQL IDE+docs](https://supabase.com/docs/guides/graphql#supabase-studio) features working with your tables, even though the GraphQL API is working just fine outside of the dashboard. This is due to the Supabases' postgres 'service_role' used by the dashboard not having correct permissions to tables. To fix this:
+
+```
+docker exec -it supabase-db /bin/bash
+psql --user supabase_admin
+postgres=> GRANT SELECT ON ALL TABLES IN SCHEMA public TO service_role;
+postgres=> NOTIFY pgrst, 'reload schema';
+```
+
+The graphiql IDE should now work properly
+
+<details>
+<summary>If you'd like, you can verify permissions to see if you actually need to run the GRANT statements</summary>
+
+Check a schema, in this case "public"
+```
+SELECT rolname, has_schema_privilege(rolname, 'public', 'USAGE') AS has_usage FROM pg_roles;
+```
+Should show "service_role | t" for public which is good, but for a schema you created, it may not and so you will need to grant usage permission.
+
+Check one of the tables that doesn't have the GraphQL docs in the dashboard, in this case "mytable"
+```
+SELECT rolname, has_table_privilege(rolname, 'public.mytable', 'SELECT') AS has_select FROM pg_roles;
+```
+If you get "service_role | f", then that is causing the issue, and you should run the GRANT statement.
+</details>
+
+
